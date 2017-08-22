@@ -6,7 +6,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
 import java.util.StringTokenizer;
 
 import org.jsoup.Connection;
@@ -20,6 +27,7 @@ public class Main {
 	
 	final static String FILE_NAME = "popular_words.txt";
 	final static String WEBSITE = "http://www.onet.pl/";
+	final static int DEMAND = 10;
 
 	public static void main(String[] args) {
 		saveHeadingsToFile();
@@ -62,7 +70,7 @@ public class Main {
 				if (word.length() <= 3) {
 					excluded.add(word);
 				} else {
-					out.add(word);
+					out.add(word.toLowerCase());
 				}
 			}
 			String str = FILE_NAME.substring(0, FILE_NAME.lastIndexOf('.')) 
@@ -72,6 +80,37 @@ public class Main {
 			Files.write(pathExcluded, excluded);
 			
 			//most popular
+			//version after third week
+			Map<String, Integer> popularWords = new HashMap<>();
+			for (String word : out) {
+				if (popularWords.containsKey(word)) {
+					popularWords.put(
+							word, 
+							popularWords.get(word) + 1);
+				} else {
+					popularWords.put(word, 1);
+				}
+			}
+			
+			out = new ArrayList<>();
+			for (int i = 0; i < DEMAND; i++) {
+				int topWord = 0;
+				for (int highest : popularWords.values()) {
+					topWord = (highest>topWord) ? highest : topWord;
+				}
+				for (String key : popularWords.keySet()) {
+					if (popularWords.get(key) == topWord) {
+						out.add(key);
+						popularWords.remove(key);
+						break;
+					}
+				}
+			}
+
+			Path pathMost = Paths.get("most_" + FILE_NAME);
+			Files.write(pathMost, out);
+			
+			/*version after first week
 			ArrayList<String> unique = new ArrayList<>();
 			out.sort(String::compareToIgnoreCase);
 			String[] outStringArray = out.toArray(new String[0]);
@@ -93,9 +132,8 @@ public class Main {
 			for (i = 0; i < popularIndexes.length; i++) {
 				popularWords.add(unique.get(popularIndexes[i]));
 			}
+			*/
 		
-			Path pathMost = Paths.get("most_" + FILE_NAME);
-			Files.write(pathMost, popularWords);
 			
 		} catch (IOException e) {
 			e.printStackTrace();
